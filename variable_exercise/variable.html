@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variable</title>
+</head>
+<body>
+    <button onclick = "
+       displaycartQuantity ();
+        "
+
+    >Show Quanty</button>
+
+    <button onclick="
+    updateQuantity(1);
+    ">Add to cart</button>
+
+    <button onclick ="
+    updateQuantity(2);
+    ">+2</button>
+
+    <button onclick ="
+    updateQuantity(3);
+    ">+3</button>
+
+    <button onclick=" 
+    countQuantity = 0
+    console.log(`Reset cart quantity`);
+    displaycartQuantity ();
+    ">Reset cart</button>
+
+    <button onclick="
+
+    updateQuantity(4);
+    ">
+        +4
+    </button>
+
+    <button onclick="
+    updateQuantity(5);
+    ">
+        +5
+    </button>
+
+    <button onclick="
+        updateQuantity(-1);
+    ">Remove the cart</button>
+    <p class = "js-btn"></p>
+
+
+
+    <script>
+        let countQuantity = 0;
+        
+
+        function updateQuantity(change){
+            if(countQuantity + change > 10){
+                alert('The cart is full!');
+                return;
+            } if (countQuantity + change < 0){
+                alert('The cart is empty!');
+                return;
+            }
+                countQuantity += change;
+                displaycartQuantity ();
+            }
+        function displaycartQuantity (){
+            document.querySelector('.js-btn').innerHTML = `cart quantity ${countQuantity}`;
+        }
+
+        
+    </script>
+</body>
+</html>

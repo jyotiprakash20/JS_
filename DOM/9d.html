@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input placeholder="Enter your name" class = "js-name" onkeydown="handlecostKey(event);">
+    <button  onclick="Myname();">Submit</button>
+
+    <p class = "js-button"></p>
+
+    <script>
+
+        function handlecostKey(event){
+            if (event.key === 'Enter'){
+                Myname();
+            }
+        }
+        function Myname(){
+            const nameinput = document.querySelector(".js-name");
+            let name = nameinput.value;
+
+            document.querySelector(".js-button").innerHTML = `Your name is :${name}`;
+
+
+        }
+    </script>
+</body>
+</html>
