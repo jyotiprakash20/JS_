@@ -31,18 +31,23 @@
     }
     .result {
         font-size: 25px;
-        font-weight: 25px;
+        font-weight: 700; /* fixed: use a numeric weight, not px */
         margin-top: 50px;
     }
     .score{
         margin-top: 60px;
     }
-    .reset-score-button{
+    .reset-score-button,
+    .js-autoplay,
+    .reset-cnf{
         background-color: white;
         border: none;
         font-size: 15px;
         padding: 8px 15px;
         cursor: pointer;
+    }
+    .reset-cnf{
+        margin-left: 10px;
     }
 </style>
 <body>
@@ -56,14 +61,12 @@
     <p class = "js-score score"></p>
 
 
-    <button onclick="
-    score.wins = 0;
-    score.losses =0;
-    score.ties = 0;
-    localStorage.removeItem('score');
-    updateScoreElement();"
-    class = 'reset-score-button'
+    <button 
+    class = 'reset-score-button js-reset-btn'
     >Reset Score</button>
+    <button class="js-autoplay js-auto-play" >Autoplay</button>
+
+    <p class="reset-cnf-msg"></p>
 
 
     <script>
@@ -75,6 +78,59 @@
         };
         updateScoreElement();
 
+        let isAutoPlaying = false;
+        let intervalId;
+
+        document.querySelector('.js-auto-play')
+        .addEventListener('click', () => {
+            autoplay();
+        })
+
+       document.querySelector('.js-reset-btn')
+       .addEventListener('click', () => {
+            showResetCnf();   
+       })
+       function resetScore(){
+            score.wins = 0;
+            score.losses =0;
+            score.ties = 0;
+            localStorage.removeItem('score');
+            updateScoreElement();
+       }
+            
+        document.body.addEventListener('keydown', (event) => {
+            if (event.key === 'r'){
+                playgame('rock');
+            }else if (event.key === 'p'){
+                playgame('paper');
+            }else if (event.key === 's'){
+                playgame('scissors');
+            }else if (event.key === 'a'){
+                autoplay();
+            }else if (event.key === 'Backspace'){
+                showResetCnf();
+            }
+        });
+
+        document.querySelector('.reset-score-button').addEventListener('click', () => {
+            showResetCnf();
+        })
+        function autoplay(){
+            if (!isAutoPlaying){
+                intervalId = setInterval (function(){
+                    const playerMove = pickComputerMove();
+                    playgame(playerMove);
+                }, 1000);
+                isAutoPlaying = true;
+
+                document.querySelector('.js-auto-play').innerHTML = 'stop-playing';
+            }else{
+                clearInterval(intervalId);
+                isAutoPlaying = false;
+
+                document.querySelector('.js-auto-play').innerHTML = 'Autoplay';
+            }
+        }
         function playgame(playerMove){
             const computerMove = pickComputerMove();
 
@@ -138,6 +194,33 @@
                 computerMove = 'scissors';
             }
             return computerMove;
+        }
+        function showResetCnf(){
+            document.querySelector('.reset-cnf-msg').innerHTML = `Are you sure you want to reset the score? 
+            <button class = 'js-yes reset-cnf'>Yes</button>
+            <button class = 'js-no reset-cnf'>No</button>
+            `;
+
+            // Attach listeners to the newly-created buttons to avoid null-selector errors
+            const yesBtn = document.querySelector('.js-yes');
+            const noBtn = document.querySelector('.js-no');
+
+            if (yesBtn) {
+                yesBtn.addEventListener('click', () => {
+                    resetScore();
+                    hideResetcnf();
+                });
+            }
+            if (noBtn) {
+                noBtn.addEventListener('click', () => {
+                    hideResetcnf();
+                });
+            }
+        }
+
+        // removed initial direct listeners to .js-yes and .js-no (they don't exist at load time)
+        function hideResetcnf(){
+            document.querySelector('.reset-cnf-msg').innerHTML = '';
         }
     </script>
 </body>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button class="js-btn" onclick="add();
+        ">Add to cart</button>
+
+        <p class="js-input"></p>
+
+        <script>
+            let timeoutId;
+            function add(){
+                const display = document.querySelector('.js-input');
+                display.innerHTML = 'Added';
+
+                clearTimeout(timeoutId);
+
+                timeoutId = setTimeout(function(){
+                    display.innerHTML = '';
+                }, 3000);
+            }
+        </script>
+</body>
+</html>

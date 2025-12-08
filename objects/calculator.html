@@ -1,91 +1,164 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-   <p> <button onclick="
-    updateCalculation('1');
-    ">1</button>
-    <button onclick="
-    updateCalculation('2');
-    ">2</button>
-    <button onclick="
-    updateCalculation('3');
-    ">3</button></p>
+<html>
+  <head>
 
-   <p> <button onclick="
-    updateCalculation('4');
-    ">4</button>
-     <button onclick="
-     updateCalculation('5');
-    ">5</button>
-    <button onclick="
-    updateCalculation('6');
-    ">6</button></p>
-
-    <p><button onclick="
-    updateCalculation('7');
-    ">7</button>
-     <button onclick="
-    updateCalculation('8');
-    ">8</button>
-    <button onclick="
-    updateCalculation('9');
-    ">9</button>
-
-    <button onclick="
-    updateCalculation('0');
-    ">0</button></p>
-
-    <p><button onclick="
-    updateCalculation('+');
-    ">+</button> 
-    <button onclick="
-    updateCalculation('-');
-    ">-</button> 
-
-    <button onclick="
-     updateCalculation('*');
-    ">*</button> </p>
+  </head>
+  <style>
+    
+    body{
+      font-family: Arial;
+      background-color: rgb(0,0,0);
+      
+    }
+    .cal{
+      color: white;
+      font-size: 45px;
+      margin-top: 15px;
+      margin-bottom: 5px;
+    }
+    .Calculator-button{
+      height: 60px;
+      width: 60px;
+      border-radius: 60px;
+      border: none;
+      font-size: 26px;
+      cursor: pointer;
+      margin-right: 5px;
+    }
+    .gray-btn{
+      background-color: rgb(51, 51, 51);
+      color: white;
+    }
+    .orange-btn{
+      background-color: rgb(251, 168, 10);
+      color: white;
+    }
+    .clear-btn{
+      font-size: 17px;
+    }
 
 
-   <p> <button onclick="
-    updateCalculation('/');
-    ">/</button> 
 
-    <button onclick="
-    calculator = eval(calculator);
-    cal();
-    localStorage.setItem('calculator', calculator);
-    ">=</button>
+  </style>
+  <body>
+    
+    <!-- Create an element to display the calculation. -->
+    <p class="js-calculation cal"></p>
 
-    <button onclick="
-         calculator ='';
-         cal();
-         localStorage.setItem('calculator', calculator);
-      ">Clear</button> 
+    <p>
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('1');
+      ">1</button>
 
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('2');
+      ">2</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('3');
+      ">3</button>
+
+      <button class="Calculator-button orange-btn" onclick="
+        updateCalculation(' + ');
+      ">+</button>
     </p>
-    <p class = "js-btn"></p>
 
+    <p>
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('4');
+      ">4</button>
 
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('5');
+      ">5</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('6');
+      ">6</button>
+
+      <button class="Calculator-button orange-btn" onclick="
+        updateCalculation(' - ');
+      ">-</button>
+    </p>
+
+    <p>
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('7');
+      ">7</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('8');
+      ">8</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('9');
+      ">9</button>
+
+      <button class="Calculator-button orange-btn" onclick="
+        updateCalculation(' * ');
+      ">*</button>
+    </p>
+
+    <p>
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('0');
+      ">0</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        updateCalculation('.');
+      ">.</button>
+
+      <button class="Calculator-button gray-btn" onclick="
+        // Note: eval() takes a string and runs it as code.
+        // Avoid using eval() in real world projects since
+        // it can potentially be given harmful code to run.
+        // Only use eval() for learning purposes.
+        calculation = eval(calculation);
+
+        // Display the calculation on the page
+        // instead of console.log
+        displayCalculation();
+
+        localStorage.setItem('calculation', calculation);
+      ">=</button>
+
+      <button class="Calculator-button orange-btn" onclick="
+        updateCalculation(' / ');
+      ">/</button>
+    </p>
+
+    <p>
+      <button class="Calculator-button gray-btn clear-btn" onclick="
+        calculation = '';
+
+        // Display the calculation on the page
+        // instead of console.log
+        displayCalculation();
+
+        localStorage.setItem('calculation', calculation);
+      ">C</button>
+    </p>
+  
     <script>
-        let calculator = localStorage.getItem('calculator')||'';
-        function updateCalculation(value){
-            calculator += value;
-            cal();
-            localStorage.setItem('calculator', calculator);
-            }
-        function savetoCalculator(){
-            localStorage.setItem('calculator', calculator);
-        }
-         function cal(){
-            document.querySelector(".js-btn").innerHTML = `${calculator}`;
-         }
-       
+      let calculation = localStorage.getItem('calculation') || '';
+
+      // Display the calculation when the page first loads.
+      displayCalculation();
+
+      function updateCalculation(value) {
+        calculation += value;
+
+        // Display the calculation on the page
+        // instead of console.log
+        displayCalculation();
+
+        localStorage.setItem('calculation', calculation);
+      }
+
+      function displayCalculation() {
+        document.querySelector('.js-calculation')
+          .innerHTML = calculation;
+      }
     </script>
-</body>
+  </body>
 </html>

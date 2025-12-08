@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        arr = [10,20,30,40,50,60];
+        console.log(arraySwap(arr));
+        function arraySwap(array){
+            temp = array[0];
+            array[0] = array[array.length-1];
+            array[array.length-1] = temp;
+
+            return array;
+        }
+    </script>
+</body>
+</html>

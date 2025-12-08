@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To do list</title>
+</head>
+<style>
+    body{
+        font-family: Arial;
+    }
+    .grid,
+    .to_do_input_grid{
+        display: grid;
+        grid-template-columns: 200px 150px 100px;
+        column-gap: 10px;
+        row-gap: 10px;
+        align-items: center;
+    }
+    .to_do_input_grid{
+        margin-bottom: 10px;
+        align-items: stretch;
+    }
+    .name_input,
+    .date_input{
+        font-size: 15px;
+        padding: 6px;
+    }
+    .add_btn{
+        background-color: green;
+        color: white;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+    }
+    .dlt_btn{
+        background-color: darkred;
+        color: white;
+        border: none;
+        font-size: 15px;
+        cursor: pointer;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+</style>
+<body>
+    <p>ToDo List</p>
+    <div class = "to_do_input_grid">
+        <input placeholder="Add work" class = "js-input name_input">
+        <input type="date" class="js-date date_input">
+        <button class = "add_btn" onclick="addtodo();">Add</button>
+    </div>
+
+    <div class = "js-todo-list grid"></div>
+
+
+    <script>
+        const todolist = JSON.parse(localStorage.getItem('todolist')) || [];
+        rendertodolist();
+        function rendertodolist(){
+            let todolistHtml = '';
+            for (let i = 0; i< todolist.length; i++){
+                const todo = todolist[i];
+
+                const {name, dueDate} = todo;
+                const html = 
+                `  <div>${name}</div>
+                   <div>${dueDate}</div>
+                <button class = "dlt_btn" onclick = "todolist.splice(${i}, 1);
+                rendertodolist();">
+                Delete</button>
+                `;
+                todolistHtml += html;
+            }
+
+            document.querySelector('.js-todo-list').innerHTML = todolistHtml;
+        }
+        function addtodo(){
+            const todo_task = document.querySelector('.js-input');
+            const name = todo_task.value;
+
+            const dateInput = document.querySelector(".js-date");
+            const dueDate = dateInput.value;
+
+            todolist.push({
+                name,
+                dueDate
+            });
+           
+
+            todo_task.value = '';
+            rendertodolist();
+
+            saveTostorage();
+        }
+
+        function saveTostorage(){
+            localStorage.setItem('todolist',JSON.stringify(todolist));
+        }
+</script>
+</body>
+</html>
