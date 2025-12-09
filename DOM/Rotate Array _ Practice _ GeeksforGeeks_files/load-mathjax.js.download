@@ -1,0 +1,18 @@
+// set global configuration object
+window.MathJax = {
+  tex: {
+    inlineMath: [["[Tex]", "[/Tex]"],['$', '$'], ['`', '`']]
+  },
+  options: {
+    skipHtmlTags: ["script", "noscript", "style", "textarea", "code"],
+    ignoreHtmlClass: "editor"
+  },
+};
+
+// add and load mathjax
+(function() {
+  const script = document.createElement("script");
+  script.src = "/practice-assets/plugins/js/tex-mml-svg.js";
+  script.async = true;
+  document.head.appendChild(script);
+})();

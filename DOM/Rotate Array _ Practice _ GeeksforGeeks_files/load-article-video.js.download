@@ -1,0 +1,553 @@
+/* eslint-disable */
+// Declaration of Variables
+let videoPlayer;
+let videoIframe;
+let videoIframeContainer;
+let currentlySelectedTile;
+let isInstreamDivExist;
+const videoDataMap = new Map();
+
+
+function initializeVideo() {
+  // Clear existing video content
+  const existingContainer = document.querySelector('#track_article_video_inner_container');
+  if (existingContainer) {
+    existingContainer.innerHTML = '';
+  }
+  const existingPlaylist = document.querySelector('#video-playlist-container');
+  if (existingPlaylist) {
+    existingPlaylist.remove();
+  }
+
+try {
+  isInstreamDivExist =
+    document.querySelector("#track_article_video_inner_container") ||
+    (() => {
+      const videoTabContent = document.querySelector("#video-tab-content");
+      const div = document.createElement("div");
+      div.id = "track_article_video_inner_container";
+      div.style.cssText = "text-align: center; margin: 20px 0px;";
+      
+      if (videoTabContent) {
+        videoTabContent.appendChild(div);
+      } else {
+        const outerDiv = document.createElement("div");
+        outerDiv.id = "video-tab-content";
+        outerDiv.className = "video-tab-content";
+        outerDiv.appendChild(div);
+        
+        const markAsReadBtn = document.querySelector("#mark_as_read_btn");
+        if (markAsReadBtn) {
+          markAsReadBtn.parentNode.insertBefore(outerDiv, markAsReadBtn);
+        } else {
+          return null;
+        }
+      }
+      return div;
+    })();
+
+ 
+
+  // Fetch the video API:
+  const url =
+    "https://apiscript.geeksforgeeks.org/get-post-videos/" +
+    window.post_id +
+    "/?version=v3";
+  if (!isInstreamDivExist) {
+    return;
+  }
+
+  fetch(url)
+    .then((response) => response.json())
+    .then((resp) => {
+      if (resp.length > 0) {
+        isInstreamDivExist.style.maxHeight = "500px"; // Increasing the maxHeight of isInstreamDivExist
+        videoPlayer = createIframe("video.html");
+        videoIframe = videoPlayer.querySelector("iframe");
+
+        videoIframe.onload = function () {
+          // Post initial data to iframe
+          videoIframe.contentWindow.postMessage(
+            { resp: resp, inView: false },
+            "*"
+          );
+
+          handleVideoTitle(resp);
+        };
+
+        // Append iframe to instream Div: "#track_article_video_inner_container"
+        isInstreamDivExist.appendChild(videoPlayer);
+
+        if (resp.length > 1) {
+          // Modify instream div's CSS to add playlist along with iframe
+          isInstreamDivExist.style.cssText = `
+                        display: flex;
+                        justify-content: center;
+                        margin-bottom: 35px;
+                    `;
+          createPlaylist(resp);
+        }
+
+        addResponsiveDesign();
+      } else {
+        console.info("NO INSTREAM VIDEO FOUND ON THIS PAGE");
+        if (isInstreamDivExist) isInstreamDivExist.style.minHeight = "0px";
+      }
+    })
+    .catch((error) => {
+      console.error(
+        "There has been a problem with apiscript fetch operation:",
+        error
+      );
+      if (isInstreamDivExist) isInstreamDivExist.style.minHeight = "0px"; // Optional: set minHeight if an error occurs
+    });
+} catch (error) {
+  console.error("Unable to load the Video Player, error occured: ", error);
+}
+}
+
+// Expose function globally for reuse
+window.initializeVideo = initializeVideo;
+
+function initializeWithObserver() {
+  const markAsReadBtn = document.querySelector("#mark_as_read_btn");
+  
+  if (markAsReadBtn) {
+    initializeVideo();
+    return;
+  }
+  
+  const articleVideoSection = document.querySelector("#article-video-section");
+  
+  if (articleVideoSection) {
+    const observer = new MutationObserver(() => {
+      const markAsReadBtn = document.querySelector("#mark_as_read_btn");
+      if (markAsReadBtn) {
+        observer.disconnect();
+        initializeVideo();
+      }
+    });
+    
+    observer.observe(articleVideoSection, {
+      childList: true,
+      subtree: true
+    });
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeWithObserver);
+} else {
+  initializeWithObserver();
+}
+
+
+window.addEventListener("message", function (event) {
+  if (
+    event.data.type === "AUTOPLAYED_NEXT_VIDEO" &&
+    event.data.autoplayPlaylistEnabled
+  ) {
+    if (event.data.videoData) {
+      handleVideoTitle([event.data.videoData]);
+    }
+
+    // Changing the current video index on autoplaying the next video from playlist
+    const allVideoTiles = Array.from(
+      document.querySelectorAll("#video-playlist-container > div")
+    );
+    changeCurrentPlayingVideoTitle(allVideoTiles[event.data.currentVideoIndex]);
+  }
+});
+
+// Create Iframe for Video player
+function createIframe(filename) {
+  var iframe = document.createElement("iframe"); // Create the iframe element
+  iframe.id = "video-iframe";
+  iframe.src = "https://aa.geeksforgeeks.org/instream/" + filename;
+  iframe.width = "640px";
+  iframe.height = "380px";
+  iframe.referrerPolicy = "origin";
+  iframe.frameBorder = "0";
+  iframe.allowFullscreen = true;
+  iframe.setAttribute("allow", "autoplay");
+
+  // Create a container for the iframe
+  videoIframeContainer = document.createElement("div");
+  videoIframeContainer.id = "video-iframe-container";
+  videoIframeContainer.style.cssText = `
+        display: flex;
+        flex-direction: column;
+        order: 2;
+        justify-content: center;
+        align-items: center;
+    `;
+
+  // Append iframe to container
+  videoIframeContainer.appendChild(iframe);
+
+  return videoIframeContainer;
+}
+
+// Create the Playlist
+function createPlaylist(resp) {
+  const playlistContainer = document.createElement("div");
+  playlistContainer.id = "video-playlist-container";
+  playlistContainer.style.cssText = `
+        width: 350px;
+        height: 360px;
+        overflow-y: scroll;
+        margin-top: 8px;
+        padding-left: 5px;
+    `;
+  playlistContainer.classList.add("sleek-scrollbar");
+
+  resp.forEach((videoData, index) => {
+    const playlistVideoTile = addVideoIntoPlaylist(videoData);
+    if (index === 0) {
+      // For the very first tile, change the h2 text color to --color-gfg
+      const firstTileHeading = playlistVideoTile.querySelector("h2");
+      if (firstTileHeading) {
+        firstTileHeading.style.setProperty(
+          "color",
+          "#357960",
+          "important"
+        );
+      }
+    }
+    playlistContainer.appendChild(playlistVideoTile);
+  });
+
+  document.body.appendChild(playlistContainer);
+
+  // Add event listener for clicks on the playlist container
+  currentlySelectedTile =
+    document.getElementById("playlist-video-tile") || null;
+  playlistContainer.addEventListener("click", (event) => {
+    const tile = event.target.closest("#playlist-video-tile");
+
+    // Find the index of the clicked tile
+    const allTiles = Array.from(
+      playlistContainer.querySelectorAll("#playlist-video-tile")
+    );
+    const currentIndex = allTiles.findIndex((el) => el === tile);
+
+    if (tile) {
+      const videoId = Number(tile.getAttribute("data-video-id"));
+      const videoData = videoDataMap.get(videoId);
+      videoIframe.contentWindow.postMessage(
+        {
+          playlist: [videoData],
+          inView: true,
+          clickedVideoFromPlaylist: true,
+          currentIndex: currentIndex,
+        },
+        "*"
+      );
+
+      handleVideoTitle([videoData]);
+      changeCurrentPlayingVideoTitle(tile);
+    }
+  });
+  
+  if (isInstreamDivExist) {
+    isInstreamDivExist.appendChild(playlistContainer);
+  }
+
+  // Add custom scrollbar styles
+  const style = document.createElement("style");
+  style.innerHTML = `
+        /* Custom scrollbar styles similar to the image */
+        .sleek-scrollbar::-webkit-scrollbar {
+            width: 6px; /* Narrow scrollbar */
+        }
+
+        .sleek-scrollbar::-webkit-scrollbar-track {
+            background: transparent; /* Invisible track for a clean look */
+        }
+
+        .sleek-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.3); /* Light greyish thumb with some transparency */
+            border-radius: 10px; /* Rounded scrollbar thumb for sleek design */
+        }
+
+        .sleek-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.5); /* Darker on hover for subtle interaction */
+        }
+
+        /* Optional: Fallback scrollbar styles for Firefox */
+        .sleek-scrollbar {
+            scrollbar-width: thin; /* Thin scrollbar */
+            scrollbar-color: rgba(0, 0, 0, 0.3) transparent; /* Similar color to match */
+        }
+    `;
+  document.head.appendChild(style);
+}
+
+// Create a div for video and appeand in 'video-playlist-conatiner'
+function addVideoIntoPlaylist(videoData) {
+  const playlistVideoTile = document.createElement("div");
+  playlistVideoTile.id = "playlist-video-tile";
+  playlistVideoTile.style.cssText = `
+        // background-color: aqua;
+        display: flex;
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        cursor: pointer;
+    `;
+  const videoId = videoData?.id || Date.now();
+  videoDataMap.set(videoId, videoData);
+  playlistVideoTile.setAttribute("data-video-id", videoId);
+
+  const playlistThumbnail = document.createElement("img");
+  playlistThumbnail.src = videoData?.meta?.thumbnail;
+  playlistThumbnail.alt = "Video Thumbnail";
+  playlistThumbnail.setAttribute("loading", "lazy");
+  playlistThumbnail.classList.add("restrict-popup-gfg");
+  playlistThumbnail.style.cssText = `
+        width: 160px;
+        height: 90px;
+        border-radius: 12px;
+        margin-right: 10px;
+        margin-left: 0px;
+    `;
+  const playlistTitle = document.createElement("h2");
+  playlistTitle.innerText = cropText(videoData?.title, 46);
+  playlistTitle.style.cssText = `
+        font-size: 14px;
+        padding: 5px
+    `;
+
+  // Add thumbnail and title of the video
+  playlistVideoTile.appendChild(playlistThumbnail);
+  playlistVideoTile.appendChild(playlistTitle);
+
+  return playlistVideoTile;
+}
+
+// Add and update the title and course link of the playing video
+function handleVideoTitle(resp) {
+  const videoIframe = document.getElementById("video-iframe-container");
+
+  // Check if the title container already exists
+  let videoInfoContainer = document.getElementById("video-info-container");
+
+  // If it doesn't exist, create it
+  if (!videoInfoContainer) {
+    videoInfoContainer = document.createElement("div");
+    videoInfoContainer.id = "video-info-container";
+    videoInfoContainer.style.cssText = `
+            display: flex;
+            width: 100%;
+            max-width: 640px;
+            padding: 0px 10px;
+            align-items: center;
+        `;
+    videoIframe.insertAdjacentElement("beforeend", videoInfoContainer);
+  }
+
+  // Handle Title
+  let titleHeading = document.getElementById("video-info-container-title");
+
+  // If the title heading doesn't exist, create it
+  if (!titleHeading) {
+    titleHeading = document.createElement("div");
+    titleHeading.id = "video-info-container-title";
+    titleHeading.style.cssText = `
+            text-align: left;
+            color: #4A4A4A !important;
+            font-size: 20px;
+            padding-right: 10px;
+            width: ${resp[0].course_link ? "80%" : "100%"};
+        `;
+    videoInfoContainer.appendChild(titleHeading);
+  }
+
+  // Update the title text
+  titleHeading.innerText = resp[0].title;
+
+  // Handle Course Link
+  let courseLink = document.getElementById("video-info-container-course-link");
+  if (resp[0].course_link) {
+    // If the course link doesn't exist, create it
+    if (!courseLink) {
+      courseLink = document.createElement("a");
+      courseLink.id = "video-info-container-course-link";
+      courseLink.target = "_blank";
+      courseLink.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #357960;
+                border: 1px solid #357960;
+                border-radius: 12px;
+                height: 30px;
+                max-width: 200px;
+                padding: 0 15px;
+                box-sizing: border-box;
+                cursor: pointer;
+                text-decoration: none;
+                font-size: 14px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            `;
+
+      const linkText = document.createElement("span");
+      linkText.innerHTML = "Visit Course";
+      linkText.style.color = "#FFFFFF";
+      linkText.style.paddingLeft = "10px";
+      courseLink.appendChild(linkText);
+
+      // Create the image element
+      const imgElement = document.createElement("img");
+      imgElement.src =
+        "https://media.geeksforgeeks.org/auth-dashboard-uploads/Vector11.svg"; // Image URL
+      imgElement.alt = "explore course icon"; // Alt text for the image
+      imgElement.style.cssText = `
+                width: auto;
+                height: 10px;
+                margin-left: 5px;
+            `;
+
+      // Append the image element after the link text
+      courseLink.appendChild(imgElement);
+
+      videoInfoContainer.appendChild(courseLink);
+
+      // Add hover effect using JavaScript
+      courseLink.addEventListener("mouseover", function () {
+        linkText.style.textDecoration = "underline";
+      });
+
+      courseLink.addEventListener("mouseout", function () {
+        linkText.style.textDecoration = "none";
+      });
+    }
+
+    // Update the course link href
+    courseLink.href = resp[0].course_link;
+  } else if (courseLink) {
+    courseLink.remove(); // Remove the "Visit Course" button if there is not course_link in the response
+  }
+}
+
+// ************************************** //
+// ********** HELPER FUNCTIONS ********** //
+// ************************************** //
+
+function addHorizontalLines(targetDiv) {
+  if (!targetDiv) {
+    console.error("Target div for adding horizontal lines not found.");
+    return;
+  }
+
+  // Check and add line before the div
+  if (
+    !targetDiv.previousElementSibling ||
+    targetDiv.previousElementSibling.tagName !== "HR"
+  ) {
+    const horizontalLineBefore = document.createElement("hr");
+    horizontalLineBefore.style.cssText = `
+            width: 100%;
+        `;
+    targetDiv.insertAdjacentElement("beforebegin", horizontalLineBefore);
+  }
+
+  // Check and add line after the div
+  if (
+    !targetDiv.nextElementSibling ||
+    targetDiv.nextElementSibling.tagName !== "HR"
+  ) {
+    const horizontalLineAfter = document.createElement("hr");
+    horizontalLineAfter.style.cssText = `
+            width: 100%;
+        `;
+    targetDiv.insertAdjacentElement("afterend", horizontalLineAfter);
+  }
+}
+
+function addResponsiveDesign() {
+  try {
+    // Add Responsive CSS style
+    const responsiveStyle = document.createElement("style");
+    responsiveStyle.innerHTML = `
+            /* Iframe Responsiveness */
+
+            @media screen and (max-width: 1800px) {
+                #video-iframe-container{    
+                    width: auto;
+                }
+            }
+
+            @media screen and (max-width: 1600px) {
+                #playlist-video-tile{
+                    flex-direction: column;
+                }
+
+                #playlist-video-tile > img {
+                    width: 100% !important;
+                    height: auto !important;
+                    margin: 0px !important;
+                }
+            }
+            
+            @media screen and (max-width: 1410px) {
+                #video-iframe-container{    
+                    width: -webkit-fill-available;
+                }
+
+                #video-playlist-container{
+                    display: none;
+                }
+
+                #video-info-container{
+                    width: auto;
+                }
+            }
+        `;
+    document.head.appendChild(responsiveStyle);
+  } catch (error) {
+    console.log("Unable to add responsive CSS, error:", error);
+  }
+}
+
+const cropText = (text, textLength) => {
+  if (typeof text === "string") {
+    if (text.length <= textLength) {
+      return text;
+    }
+    text = text.substring(0, textLength) + "...";
+    return text;
+  }
+  if (typeof text === "object") {
+    text = text.join(", ");
+    if (text.length <= textLength) {
+      return text;
+    }
+    text = text.substring(0, textLength);
+    text = text.slice(-1) == "," || text.slice(-1) == " " ? text : text + "...";
+    return text;
+  }
+};
+
+function changeCurrentPlayingVideoTitle(tile) {
+  if (currentlySelectedTile) {
+    // Change color back to black for the previously selected tile
+    const previousHeading = currentlySelectedTile.querySelector("h2");
+    if (previousHeading) {
+      previousHeading.style.color = "#000";
+    }
+  }
+
+  const playlistVideoTileHeading = tile.querySelector("h2");
+  if (playlistVideoTileHeading) {
+    playlistVideoTileHeading.style.setProperty(
+      "color",
+      "#357960",
+      "important"
+    );
+  }
+  currentlySelectedTile = tile;
+}
