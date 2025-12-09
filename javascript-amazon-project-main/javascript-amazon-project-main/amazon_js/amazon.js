@@ -128,10 +128,6 @@ document.querySelectorAll('.js-add-to-cart-button').
       document.querySelector('.js-cart-quantity').
       innerHTML = cartQuantity;
 
-      console.log(cartQuantity);
-      console.log(cart);
-
-
-
+      
     });
   });
